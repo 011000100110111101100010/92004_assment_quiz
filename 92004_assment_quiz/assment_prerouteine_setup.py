@@ -1,6 +1,7 @@
 import random
 
-# this check if the input is in line with a valid answer
+
+# this check if the input is in line with a valid x
 def string_checker(text, valid_ans):
     error = f"Please enter a valid option from the following list{valid_ans}"
     while True:
@@ -28,57 +29,64 @@ def string_checker(text, valid_ans):
 
 def instructions_text():
     print('''Algebra quiz
-    You will begin by choosing the number of questions that you would like to get asked (<enter> for infinite questions)
-    then you will be given an algebra problem and a possible answer (rounded to 2dp) and asked if that answer is correct 
-    try to get as many correct answers as possible good luck :)''')
+    You will begin by choosing the number of questions that you would like to get asked (<enter> for infinite questions).
+    You will then be given an algebra problem to solve for 𝒳 get as many questions right as possible>
+    Good luck and have fun :''')
 
 
-# this will generate the question that will be printed
+# creates a question to be printed later
 def question(a, b, sign, x__location):
+    if sign == "÷":
+        return f"{b} ÷ 𝒳 = {a}"
     if sign == "X" and x__location == 2 or sign == "X" and x__location == 3:
         return f"{a}𝒳 = {b}"
-    if x__location == 1:
-        return f"{a} {sign} {b} = 𝒳"
     if x__location == 2:
         return f"𝒳 {sign} {a} = {b}"
     return f"{a} {sign} 𝒳 = {b}"
 
-
-# this uses all the possible options to generate an answer for x
+# generates var2 also known as b in other places
 def new_question(var_symbol, a, b, x_placement):
-    try:
-        if x_placement == 1 and var_symbol == "+" or x_placement == 2 and var_symbol == "-":
-            return a + b
-        elif x_placement == 2 and var_symbol == "+" or x_placement == 3 and var_symbol == "+":
-            return b - a
-        elif x_placement == 1 and var_symbol == "-" or x_placement == 3 and var_symbol == "-":
-            return a - b
-        elif x_placement == 1 and var_symbol == "÷" or x_placement == 3 and var_symbol == "÷":
-            return a / b
-        elif x_placement == 1 and var_symbol == "X" or x_placement == 2 and var_symbol == "÷":
-            return a * b
-        elif x_placement == 2 and var_symbol == "X" or x_placement == 3 and var_symbol == "X":
-            return b / a
-    except ZeroDivisionError:
-        return "fail"
+    if var_symbol == "+":
+        return a+b
+    if var_symbol == "-" and x_placement == 3:
+        return a-b
+    if var_symbol == "-" and x_placement == 2:
+        return b-a
+    if var_symbol == "X" or var_symbol == "÷":
+        return a*b
 
 
-# this checks that the input is an integer
+# checks the validity of the received input and if valid determines the output
+def int_check(question, low=None, high=None, exit_code=None, escape=None):
+    # if any integer is allowed
+    if low is None and high is None:
+        error = "Please enter an integer as your x"
 
-def int_check(text, low=None, escape=None):
-    # defines the error
-    error = (f"please enter an integer that is "
-             f"more than / equal to {low}")
+    elif low is not None and high is None:
+        error = (f"please enter an integer that is "
+                 f"more than / equal to {low}")
 
-    # checks for infinite or exit code
+    else:
+        error = (f"Please enter an integer that"
+                 f" is between {low} and {high} (inclusive)")
     while True:
-        response = input(text).lower()
+        response = input(question).lower()
         if response == escape:
             return response
 
+        # checks for infinite or exit code
+
         try:
+
+            if response == exit_code or int(response) == exit_code:
+                return "correct"
+
             # checks if too low
             if low is not None and int(response) < low:
+                print(error)
+
+            # checks if too high
+            elif high is not None and int(response) > high:
                 print(error)
 
             # if valid returns
@@ -88,11 +96,9 @@ def int_check(text, low=None, escape=None):
             print(error)
 
 
-# ***main routine***
-# initializes the variables
 rounds_played = 0
 round_num = 0
-answer = 0
+x = 0
 # var1 and 2 are used in equations as the random variables
 var1 = 0
 var2 = 0
@@ -101,7 +107,7 @@ x_location = 0
 # x location is where x will be in the asked questions
 correct_answers = 0
 incorrect_answers = 0
-# feedback is what will be printed as the answer
+# feedback is what will be printed as the x
 feedback = ""
 # holds the games history to be printed at request
 history = []
@@ -110,6 +116,7 @@ mode = "normal"
 user_input = ""
 # end game is no until they wish to quit
 end_game = "no"
+
 print()
 print("*** Welcome to The Ultimate Algebra Math Quiz ***")
 print()
@@ -120,7 +127,7 @@ if instructions == "yes":
     instructions_text()
 
 # asks how many rounds they want to play and allows <enter> for infinite rounds
-round_num = int_check("how many questions would you like to be asked to press enter for infinite? ", low=1,
+round_num = int_check("how many questions would you like to be asked? (press enter for infinite) ", low=1,
                       escape="")
 # ensures that the rounds played will be endless by having an additional 20 rounds
 if round_num == "":
@@ -133,65 +140,48 @@ while round_num > rounds_played:
         break
     round_heading = f"\nQuestion {rounds_played+1} ({mode} mode)"
     print(round_heading)
-    # generates the random symbol x location and variables and weather the answer will be correct
-    x_location = random.randint(1, 3)
+    # randomizes the new question by generating random variables
     symbol = random.choice(["+", "X", "÷", "-"])
     var1 = random.randint(-25, 25)
-    var2 = random.randint(-25, 25)
-    show_answer = random.choice(["yes", "no"])
-    answer = new_question(symbol, var1, var2, x_location)
-    if show_answer == "no":
-        if symbol == "X" or symbol == "÷":
-            wrong = random.uniform(-100, 100)
-        else:
-            wrong = random.randint(-100, 100)
-        if round(answer, 2) == round(wrong, 2):
-            show_answer = "yes"
-    else:
-        wrong = answer
-    # is the answer creates a zero division error it makes the symbol addition
-    if answer == "fail":
-        symbol = "+"
-        answer = new_question(symbol, var1, var2, x_location)
-        wrong = answer
-    # asks the previously generated question
+    x = random.randint(-25, 25)
+    x_location = random.randint(2,3)
+    var2 = new_question(symbol, var1, x, x_location)
 
+    # this is a variable as it is used to store if history
     asked_question = question(var1, var2, symbol, x_location)
     print(asked_question)
-    user_input = string_checker(f"is 𝒳 approximately {round(wrong, 2)} ", ["yes", "no", "xxx"])
-
-    # this checks if the user is trying to quit on round 1 and loops the question until they stop trying to quit
+    user_input = int_check("find 𝒳 ", exit_code=x, escape="xxx")
+    # catches people trying to end the game on round 1
     while user_input == "xxx" and rounds_played < 1:
-        print("cannot end game on round one ")
-        user_input = string_checker(f"is 𝒳 approximately {round(wrong, 2)} ", ["yes", "no", "xxx"])
-    # lets the user quit by pressing xxx
+        print("cannot skip on round one ")
+        user_input = int_check("find 𝒳", exit_code=x, escape="xxx")
+    # lets people end the game after round 1
     if user_input == "xxx" and rounds_played > 0:
         end_game = "yes"
         break
-    # checks the users answers and makes the feedback
-    elif user_input == show_answer:
-        feedback = f"correct the answer is : {round(answer, 2)} rounded to 2dp"
+
+    if user_input == "correct":
+        feedback = "🎉🎉🎉that's correct good job🎉🎉🎉"
         correct_answers += 1
     else:
-        feedback = f"im sorry that is incorrect, the answer is approximately: {round(answer, 2)} rounded to 2dp"
+        feedback = f"❌❌❌im sorry that is incorrect the answer is: {x}❌❌❌"
         incorrect_answers += 1
     if not user_input == "xxx":
         print(feedback)
     rounds_played += 1
-    # increases the rounds if the game is infinite
+
     if mode == "Infinite":
         round_num += 10
     if not user_input == "xxx":
         history.append(round_heading)
         history.append(f"the equation given was: {asked_question}")
-        history.append(f"the possible variable was: {round(wrong,2)}")
         history.append(f"your answer was: {user_input}")
         history.append(feedback)
         history.append("")
 
-# holds the game history
 percent_won = (correct_answers / rounds_played) * 100
 percent_lost = (incorrect_answers / rounds_played) * 100
+print(f"you got {correct_answers}/{rounds_played} questions correct")
 print(f"\nyou were incorrect: {round(percent_lost)}% of the time")
 print(f"\nyou were correct: {round(percent_won)}% of the time")
 print("***game history***")
